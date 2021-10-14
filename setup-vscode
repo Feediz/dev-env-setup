@@ -7,7 +7,7 @@ gitTemplateFile=${2:-"https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90
 extensionListFile=${3:-"https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt"}
 
 extension="extensions.txt"
-gitmsg="~/.gitmessage"
+gitmsg=~/.gitmessage
 
 
 # set up git template
