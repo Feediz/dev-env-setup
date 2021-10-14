@@ -19,9 +19,9 @@ curl -o ~/.gitmessage ${gitTemplateFile}
 git config --global commit.template ~/.gitmessage
 
 
-echo 'Installing vscode extensions'
+echo 'Installing vscode extensions from ${extensionListFile}'
 # set up vscode extensions
-curl -o ${extensions} ${extensionListFile}
+curl -o ${extensions} "${extensionListFile}"
 cat ${extensions} | xargs -L 1 code --install-extension
 
 echo 'removing extensions file'
