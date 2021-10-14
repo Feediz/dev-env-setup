@@ -8,23 +8,6 @@ extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d9
 
 extension=extensions.txt
 
-# the different environments
-# woo, magento, ansible
-
-if [ $environment = 'woo']; then
-  # woo setup
-  setup_woo
-elif [ $environment = 'magento']; then
-  # magento setup
-  setup_magento
-elif [ $environment = 'ansible']; then
-  # ansible setup
-  setup_ansible
-else
-  # default
-  setup_woo
-fi
-
 setup_woo()
 {
   # set up woo
@@ -91,5 +74,25 @@ setup_ansible()
   echo 'VSCode Setup Completed' 
 }
  
+
+# the different environments
+# woo, magento, ansible
+
+if [ $environment == 'woo' ]
+then
+  # woo setup
+  setup_woo
+elif [ $environment == 'magento' ] 
+then
+  # magento setup
+  setup_magento
+elif [ $environment == 'ansible' ] 
+then
+  # ansible setup
+  setup_ansible
+else
+  # default
+  setup_woo
+fi
 
 # curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
