@@ -22,6 +22,7 @@ elif [ $environment == 'ansible']; then
   setup_ansible
 else
   # default
+  setup_woo
 fi
 
 setup_woo()
