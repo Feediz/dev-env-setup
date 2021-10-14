@@ -6,27 +6,89 @@ environment=${1:-woo}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
 extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt}
 
-# gitTemplateFile=https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage
-# extensionListFile=https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt
-
 extension=extensions.txt
 
-# set up git template
-curl -o ~/.gitmessage $gitTemplateFile
-echo 'Setting up git commit message template'
-git config --global commit.template ~/.gitmessage
+# the different environments
+# woo, magento, ansible
 
-echo 'Installing vscode extensions from'
-echo $extensionListFile
+if [ $environment == 'woo']; then
+  # woo setup
+  setup_woo
+elif [ $environment == 'magento']; then
+  # magento setup
+  setup_magento
+elif [ $environment == 'ansible']; then
+  # ansible setup
+  setup_ansible
+else
+  # default
+fi
 
-# set up vscode extensions
-curl -o $extension $extensionListFile
-cat $extension | xargs -L 1 code --install-extension
+setup_woo()
+{
+  # set up woo
+  echo "Setting up environment for woocommerce"
+  # set up git template
+  curl -o ~/.gitmessage $gitTemplateFile
+  echo 'Setting up git commit message template'
+  git config --global commit.template ~/.gitmessage
 
-echo 'removing extensions file'
-rm $extension
+  echo 'Installing vscode extensions from'
+  echo $extensionListFile
 
-echo 'VSCode Setup Completed' 
+  # set up vscode extensions
+  curl -o $extension $extensionListFile
+  cat $extension | xargs -L 1 code --install-extension
+
+  echo 'removing extensions file'
+  rm $extension
+
+  echo 'VSCode Setup Completed' 
+}
+
+setup_magento()
+{
+  # set up magento
+  echo "Setting up environment for magento"
+  # set up git template
+  curl -o ~/.gitmessage $gitTemplateFile
+  echo 'Setting up git commit message template'
+  git config --global commit.template ~/.gitmessage
+
+  echo 'Installing vscode extensions from'
+  echo $extensionListFile
+
+  # set up vscode extensions
+  curl -o $extension $extensionListFile
+  cat $extension | xargs -L 1 code --install-extension
+
+  echo 'removing extensions file'
+  rm $extension
+
+  echo 'VSCode Setup Completed' 
+}
+
+setup_ansible()
+{
+  # set up ansible
+  echo "Setting up environment for ansible"
+  # set up git template
+  curl -o ~/.gitmessage $gitTemplateFile
+  echo 'Setting up git commit message template'
+  git config --global commit.template ~/.gitmessage
+
+  echo 'Installing vscode extensions from'
+  echo $extensionListFile
+
+  # set up vscode extensions
+  curl -o $extension $extensionListFile
+  cat $extension | xargs -L 1 code --install-extension
+
+  echo 'removing extensions file'
+  rm $extension
+
+  echo 'VSCode Setup Completed' 
+}
  
 
 # curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
