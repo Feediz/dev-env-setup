@@ -25,6 +25,6 @@ echo 'removing extensions file'
 rm ${extensions}
 
 echo 'VSCode Setup Completed'
-
+ 
 
 # curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
