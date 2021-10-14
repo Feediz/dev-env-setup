@@ -1,9 +1,4 @@
-#!/bin/bash
-set -o errexit
-
-# environment
-environment=${1:-woo}
-
+#!/usr/bin/env bash
 
 # set up git template
 echo 'Setting up git commit message template'
@@ -15,6 +10,3 @@ echo 'Installing vscode extensions'
 # set up vscode extensions
 curl -o extensions.txt https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt
 cat extensions.txt | xargs -L 1 code --install-extension 
-
-
-# curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
