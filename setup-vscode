@@ -22,7 +22,7 @@ echo 'Installing vscode extensions from'
 echo $extensionListFile
 
 # set up vscode extensions
-curl -o $extensions $extensionListFile
+curl -o $extension $extensionListFile
 cat $extensions | xargs -L 1 code --install-extension
 
 echo 'removing extensions file'
