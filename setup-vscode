@@ -18,7 +18,7 @@ echo 'Setting up git commit message template'
 curl -o ~/.gitmessage $gitTemplateFile
 git config --global commit.template ~/.gitmessage
 
-
+echo $extensionListFile
 echo 'Installing vscode extensions from $extensionListFile'
 # set up vscode extensions
 curl -o ${extensions} "$extensionListFile"
