@@ -11,13 +11,13 @@ extension=extensions.txt
 # the different environments
 # woo, magento, ansible
 
-if [ $environment == 'woo']; then
+if [ $environment = 'woo']; then
   # woo setup
   setup_woo
-elif [ $environment == 'magento']; then
+elif [ $environment = 'magento']; then
   # magento setup
   setup_magento
-elif [ $environment == 'ansible']; then
+elif [ $environment = 'ansible']; then
   # ansible setup
   setup_ansible
 else
