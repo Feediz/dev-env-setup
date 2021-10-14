@@ -12,7 +12,7 @@ gitmsg=~/.gitmessage
 
 # set up git template
 echo 'Setting up git commit message template'
-curl -o ${gitmsg} ${gitTemplateFile}
+curl -o ~/.gitmessage ${gitTemplateFile}
 git config --global commit.template ~/.gitmessage
 
 
