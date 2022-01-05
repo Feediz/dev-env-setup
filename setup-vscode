@@ -22,6 +22,8 @@ setup_bash_alias()
 
   echo 'removing bash_aliases template file'
   rm $bashAlias
+  
+  source ~/.bash_aliases
 
   echo 'bash aliases set up complete' 
 }
