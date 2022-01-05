@@ -6,7 +6,26 @@ environment=${1:-woo}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
 extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt}
 
+bashAlias=https://gist.githubusercontent.com/Feediz/21faf54718773a0cd2af1a323f079bc4/raw/93d692288b47ffdab95156e1f96f55b7ce12d993/.bash_aliases
+
 extension=extensions.txt
+
+
+setup_bash_alias()
+{
+  # set up woo
+  echo "Setting up default bash aliase"
+  
+  # set up git template
+  curl -o ~/.bash_aliases $bashAlias
+  echo 'Setting up .bash_aliases file'
+
+  echo 'removing bash_aliases template file'
+  rm $bashAlias
+
+  echo 'bash aliases set up complete' 
+}
+
 
 setup_woo()
 {
@@ -90,6 +109,10 @@ elif [ $environment == 'ansible' ]
 then
   # ansible setup
   setup_ansible
+elif [ $environment == 'bash' ] 
+then
+  # bash alias setup
+  setup_bash_alias
 else
   # default
   setup_woo
