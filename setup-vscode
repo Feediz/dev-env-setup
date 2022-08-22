@@ -32,8 +32,8 @@ setup_bash_alias()
   curl -o ~/.bash_aliases $bashAlias
   echo 'Setting up .bash_aliases file'
 
-  echo 'removing bash_aliases template file'
-  rm $bashAlias
+  #echo 'removing bash_aliases template file'
+  #rm $bashAlias
   
   source ~/.bash_aliases
 
