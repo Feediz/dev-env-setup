@@ -2,7 +2,7 @@
 set -o errexit
 
 # environment
-environment=${1:-woo}
+environment=${1:-php}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
 extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt}
 
@@ -196,30 +196,32 @@ setup_ansible()
 
   echo 'VSCode Setup Completed' 
 }
- 
+
+
+setup_common
 
 # the different environments
 # woo, magento, ansible
 
-if [ $environment == 'woo' ]
-then
+#if [ $environment == 'woo' ]
+#then
   # woo setup
-  setup_woo
-elif [ $environment == 'magento' ] 
-then
+#  setup_woo
+#elif [ $environment == 'magento' ] 
+#then
   # magento setup
-  setup_magento
-elif [ $environment == 'ansible' ] 
-then
+#  setup_magento
+#elif [ $environment == 'ansible' ] 
+#then
   # ansible setup
-  setup_ansible
-elif [ $environment == 'bash' ] 
-then
+ # setup_ansible
+#elif [ $environment == 'bash' ] 
+#then
   # bash alias setup
-  setup_bash_alias
-else
+#  setup_bash_alias
+#else
   # default
-  setup_woo
-fi
+#  setup_woo
+#fi
 
 # curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
