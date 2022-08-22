@@ -6,6 +6,18 @@ environment=${1:-woo}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
 extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt}
 
+
+extension_python=https://gist.githubusercontent.com/Feediz/e0f457b138d865be256422c4150e600a/raw/8ba39aafd005761553449a74adcd22a7afca20a0/extensions_python.txt
+extension_docker=https://gist.githubusercontent.com/Feediz/d5bdb668244beaede55277357add8db1/raw/e3a7fcec0f0571871180ce85e557a60e10808778/extensions_docker.txt
+extension_db=https://gist.githubusercontent.com/Feediz/b2657fc56f06f1e6cc29f8a0660c35e6/raw/ab27c199b4de8060af4b3cad43edabd07a415dab/extensions_db.txt
+extension_magento=https://gist.githubusercontent.com/Feediz/5b77ecd571d43163172aa36118e3c95b/raw/958669b66d0d97a04fc32ff452ae7650598107fb/extensions_magento.txt
+extension_newrelic=https://gist.githubusercontent.com/Feediz/6c3e15fdcd985bd60c6c6de74855c65e/raw/bdd24edfa5bfbade68a48ad46d5c6c1a265808bb/extensions_newrelic.txt
+extension_sfdc=https://gist.githubusercontent.com/Feediz/785ed873324bd2970ea781681d6f9575/raw/8692521da06aabf266c93edf63f24998cf5648f0/extensions_sfdc.txt
+extension_terraform=https://gist.githubusercontent.com/Feediz/569a65f0278b0a941dac2ecb785e4661/raw/c04ef351e2442ef3bdcee40f1cd3e341afb21451/extensions_terraform.txt
+extension_common=https://gist.githubusercontent.com/Feediz/c64b6f3682cd0fb8e3bd12fe807bcf09/raw/c585797069586ed250b246d9961fd4531d06a164/extensions_common.txt
+extension_js=https://gist.githubusercontent.com/Feediz/edb471128211e926b00e612b9b6fb3ab/raw/20db20e89f9b7f072ca78ea3a50dcf9e26c8dc40/extensions_js.txt
+extension_php=https://gist.githubusercontent.com/Feediz/1f0f8a74ecc2470c15bba144fb8d0829/raw/43d2690e97013c63b7e8f72a53e753e9a854120e/extensions_php.txt
+
 bashAlias=https://gist.githubusercontent.com/Feediz/21faf54718773a0cd2af1a323f079bc4/raw/201c9dcc96b014bbaa481b2375a09617ddf34603/.bash_aliases
 
 extension=extensions.txt
@@ -26,6 +38,96 @@ setup_bash_alias()
   source ~/.bash_aliases
 
   echo 'bash aliases set up complete' 
+}
+
+
+setup_common()
+{
+  # set up woo
+  echo "Setting up environment for common development"
+  
+  # set up git template
+  curl -o ~/.gitmessage $gitTemplateFile
+  echo 'Setting up git commit message template'
+  git config --global commit.template ~/.gitmessage
+
+  echo 'Installing vscode extensions from'
+  echo $extension_common
+  #echo $extensionListFile
+
+  # set up vscode extensions
+  curl -o $extension $extension_common
+  cat $extension | xargs -L 1 code --install-extension
+
+  echo 'removing extensions file'
+  rm $extension
+  
+  echo 'Setting up bash'
+  setup_bash_alias
+  
+  
+  if [ $environment == 'php' ]
+  then
+    # php setup
+    setup_php
+  elif [ $environment == 'python' ] 
+  then
+    # python setup
+    setup_python
+  elif [ $environment == 'js' ] 
+  then
+    # js setup
+    setup_js
+  elif [ $environment == 'terraform' ] 
+  then
+    # terraform setup
+    setup_terraform
+  elif [ $environment == 'newrelic' ] 
+  then
+    # new relic setup
+    setup_newrelic
+  elif [ $environment == 'docker' ] 
+  then
+    # docker setup
+    setup_docker
+  elif [ $environment == 'db' ] 
+  then
+    # db setup
+    setup_db
+  elif [ $environment == 'sfdc' ] 
+  then
+    # sfdc setup
+    setup_sfdc
+  elif [ $environment == 'magento' ] 
+  then
+    # magento setup
+    setup_magento
+  else
+    # default
+    setup_php
+  fi
+
+  echo 'VSCode Setup Completed' 
+}
+
+
+setup_python()
+{
+  # set up woo
+  echo "Setting up environment for python development"
+
+  echo 'Installing vscode extensions from'
+  echo $extension_python
+  #echo $extensionListFile
+
+  # set up vscode extensions
+  curl -o $extension $extension_python
+  cat $extension | xargs -L 1 code --install-extension
+
+  echo 'removing extensions file'
+  rm $extension
+
+  echo 'VSCode Setup Completed' 
 }
 
 
