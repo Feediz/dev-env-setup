@@ -239,9 +239,9 @@ elif [ $environment == 'bash' ]
 then
   bash alias setup
  setup_bash_alias
-else
-  default
- setup_woo
+# else
+#   default
+#  setup_woo
 fi
 
 # curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
