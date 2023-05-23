@@ -42,7 +42,7 @@ setup_bash_alias()
   # add an include to bash_aliases to the .zshrc if it exists
   bashAliasVar="
   if [ -f ~/.bash_aliases ]; then
-    ~/.bash_aliases
+   . ~/.bash_aliases
   fi
   "
   
