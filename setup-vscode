@@ -41,9 +41,10 @@ setup_bash_alias()
 
   # add an include to bash_aliases to the .zshrc if it exists
   bashAliasVar="
-  if [ -f ~/.bash_aliases ]; then\n
-    \t. ~/.bash_aliases\n
-  fi"
+  if [ -f ~/.bash_aliases ]; then
+    ~/.bash_aliases
+  fi
+  "
   
   echo ""
   echo $bashAliasVar >> ~/.zshrc
@@ -69,12 +70,13 @@ setup_common()
   echo $extension_common
   #echo $extensionListFile
 
-  # set up vscode extensions
+  # set up vscode common extensions
   curl -o $extension $extension_common
   cat $extension | xargs -L 1 code --install-extension
   echo 'removing extensions file'
   rm $extension
 
+  # install vscode themes extensions
   curl -o $extension $extension_themes
   cat $extension | xargs -L 1 code --install-extension
   echo 'removing extensions file'
