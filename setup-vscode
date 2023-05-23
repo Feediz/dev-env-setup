@@ -40,8 +40,8 @@ setup_bash_alias()
   echo "Adding .bash_aliases to .zshrc"
 
   # add an include to bash_aliases to the .zshrc if it exists
-  bashAliasVar="
-  \nif [ -f ~/.bash_aliases ]; then\n
+  bashAliasVar="\n
+  if [ -f ~/.bash_aliases ]; then\n
    \t . ~/.bash_aliases\n
   fi
   "
