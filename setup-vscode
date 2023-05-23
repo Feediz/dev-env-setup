@@ -8,7 +8,7 @@ extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d9
 
 
 extension_common=https://gist.githubusercontent.com/Feediz/c64b6f3682cd0fb8e3bd12fe807bcf09/raw/c585797069586ed250b246d9961fd4531d06a164/extensions_common.txt
-extension_common=https://gist.githubusercontent.com/Feediz/35405560919dfbf258172dfcd5ba3907/raw/89e1aea9072fe95d0c4f476b05fc25a87fe4c893/extensions_common1
+extension_common=https://gist.githubusercontent.com/Feediz/35405560919dfbf258172dfcd5ba3907/raw/aa9d339d1df07710149a0c1148b7fe03a3e25533/extensions_common1
 extension_themes=https://gist.githubusercontent.com/Feediz/6c39eef44201b1c3f450febf8be22cb3/raw/20ce8bf02e84a372129a4a1687ba4c51a3a3c55b/extensions_themes
 
 extension_python=https://gist.githubusercontent.com/Feediz/e0f457b138d865be256422c4150e600a/raw/8ba39aafd005761553449a74adcd22a7afca20a0/extensions_python.txt
