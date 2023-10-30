@@ -1,0 +1,243 @@
+#!/bin/sh
+
+# =================================================================
+# Setup color constants
+# =================================================================
+# Reset
+Color_Off='\033[0m'       # Text Reset
+
+# Regular Colors
+Black='\033[0;30m'        # Black
+Red='\033[0;31m'          # Red
+Green='\033[0;32m'        # Green
+Yellow='\033[0;33m'       # Yellow
+Blue='\033[0;34m'         # Blue
+Purple='\033[0;35m'       # Purple
+Cyan='\033[0;36m'         # Cyan
+White='\033[0;37m'        # White
+
+# Bold
+BBlack='\033[1;30m'       # Black
+BRed='\033[1;31m'         # Red
+BGreen='\033[1;32m'       # Green
+BYellow='\033[1;33m'      # Yellow
+BBlue='\033[1;34m'        # Blue
+BPurple='\033[1;35m'      # Purple
+BCyan='\033[1;36m'        # Cyan
+BWhite='\033[1;37m'       # White
+
+# Underline
+UBlack='\033[4;30m'       # Black
+URed='\033[4;31m'         # Red
+UGreen='\033[4;32m'       # Green
+UYellow='\033[4;33m'      # Yellow
+UBlue='\033[4;34m'        # Blue
+UPurple='\033[4;35m'      # Purple
+UCyan='\033[4;36m'        # Cyan
+UWhite='\033[4;37m'       # White
+
+# Background
+On_Black='\033[40m'       # Black
+On_Red='\033[41m'         # Red
+On_Green='\033[42m'       # Green
+On_Yellow='\033[43m'      # Yellow
+On_Blue='\033[44m'        # Blue
+On_Purple='\033[45m'      # Purple
+On_Cyan='\033[46m'        # Cyan
+On_White='\033[47m'       # White
+
+# High Intensity
+IBlack='\033[0;90m'       # Black
+IRed='\033[0;91m'         # Red
+IGreen='\033[0;92m'       # Green
+IYellow='\033[0;93m'      # Yellow
+IBlue='\033[0;94m'        # Blue
+IPurple='\033[0;95m'      # Purple
+ICyan='\033[0;96m'        # Cyan
+IWhite='\033[0;97m'       # White
+
+# Bold High Intensity
+BIBlack='\033[1;90m'      # Black
+BIRed='\033[1;91m'        # Red
+BIGreen='\033[1;92m'      # Green
+BIYellow='\033[1;93m'     # Yellow
+BIBlue='\033[1;94m'       # Blue
+BIPurple='\033[1;95m'     # Purple
+BICyan='\033[1;96m'       # Cyan
+BIWhite='\033[1;97m'      # White
+
+# High Intensity backgrounds
+On_IBlack='\033[0;100m'   # Black
+On_IRed='\033[0;101m'     # Red
+On_IGreen='\033[0;102m'   # Green
+On_IYellow='\033[0;103m'  # Yellow
+On_IBlue='\033[0;104m'    # Blue
+On_IPurple='\033[0;105m'  # Purple
+On_ICyan='\033[0;106m'    # Cyan
+On_IWhite='\033[0;107m'   # White
+
+
+# =================================================================
+# Functions
+# =================================================================
+function customPrint() {
+    msg=$1
+    type="info"
+    if [ $2 != "" ]
+    then
+        type=$2
+    fi
+    #type=[[ $2 -ne "" ]] && echo $2 || echo "info"
+    
+    if [ "$type" = "info" ]
+    then
+        printf "$Green $msg $Black\n";
+    fi
+}
+
+function checkBrewInstall() {
+    # check if homebrew is installed
+    customPrint "Checking if Homebrew is installed ..." "info"
+    which -s brew
+    if [[ $? != 0 ]] ; then
+        # Install Homebrew
+        customPrint "Installing Homebrew ..." "info"
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    else
+        cmd="brew update"
+        customPrint "Homebrew is installed ..." "info"
+        customPrint "Running command ( $cmd )" "info"
+        #$cmd
+    fi
+}
+
+function checkHTTPDInstall() {
+    # check if httpd is installed
+    customPrint "Checking if httpd is installed ..." "info"
+    which -s httpd
+    if [[ $? != 0 ]] ; then
+        # Install httpd
+        customPrint "Installing httpd ..." "info"
+        cmdInstallHttpd="brew install httpd"
+        customPrint "Running command: ( $cmdInstallHttpd )" "info"
+        $cmdInstallHttpd
+    else
+        customPrint "httpd is $On_IRed installed $Green ..." "info"
+    fi
+}
+
+
+function checkMKCERTInstall() {
+    # check if mkcert is installed
+    customPrint "Checking if mkcert is installed ..." "info"
+    which -s mkcert
+    if [[ $? != 0 ]] ; then
+        # Install mkcert
+        customPrint "Installing mkcert ..." "info"
+        cmdInstallMkcert="brew install mkcert nss"
+        customPrint "Running command: $On_IRed( $cmdInstallMkcert ) $Green" "info"
+        $cmdInstallMkcert
+    else
+        customPrint "mkcert is $On_IRed installed $Green ..." "info"
+    fi
+}
+
+
+function checkMYSQLInstall() {
+    # check if mysql is installed
+    customPrint "Checking if mysql is installed ..." "info"
+    which -s mysql
+    if [[ $? != 0 ]] ; then
+        # Install mysql
+        customPrint "Installing mysql ..." "info"
+        cmdInstallMySql="brew install mysql"
+        customPrint "Running command: $On_IRed( $cmdInstallMySql ) $Green" "info"
+        $cmdInstallMySql
+    else
+        customPrint "mysql is $On_IRed installed $Green ..." "info"
+    fi
+}
+
+
+function checkNVMInstall() {
+    # check if nvm is installed
+    customPrint "Checking if nvm is installed ..." "info"
+    #which -s nvm
+    nvm -v
+    echo $?
+    if [[ $? != 0 ]] ; then
+        # Install nvm
+        customPrint "Installing nvm ..." "info"
+        cmdInstallNVM="brew install nvm"
+        customPrint "Running command: $On_IRed( $cmdInstallNVM ) $Green" "info"
+        $cmdInstallNVM
+    else
+        customPrint "nvm is $On_IRed installed $Green ..." "info"
+    fi
+}
+
+
+function checkVSCodeInstall() {
+    # check if vscode is installed
+    customPrint "Checking if vscode is installed ..." "info"
+    which -s code
+    if [[ $? != 0 ]] ; then
+        # Install vscode
+        customPrint "Installing vscode ..." "info"
+        cmdInstallVsCode="brew install --cask visual-studio-code"
+        customPrint "Running command: $On_IRed( $cmdInstallVsCode ) $Green" "info"
+        $cmdInstallVsCode
+    else
+        customPrint "vscode is $On_IRed installed $Green ..." "info"
+    fi
+}
+
+
+function checkGoogleChromeInstall() {
+    # check if Chrome is installed
+    customPrint "Checking if Chrome is installed ..." "info"
+
+    # default chrome installation path
+    CHROMEPATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+    if [ -x "$CHROMEPATH" ]; then
+        # chrome is installed
+        customPrint "Chrome is $On_IRed installed $Green ..." "info"
+    else
+        # chrome is not installed
+        # Install Chrome
+        customPrint "Installing Chrome ..." "info"
+        cmdInstallChrome="brew install --cask google-chrome"
+        customPrint "Running command: $On_IRed( $cmdInstallChrome ) $Green" "info"
+        $cmdInstallChrome
+    fi
+}
+
+
+
+
+# check if brew exist and install if it doesn't
+checkBrewInstall
+
+# install httpd
+checkHTTPDInstall
+
+# install mkcert
+checkMKCERTInstall
+
+# install mysql
+checkMYSQLInstall
+
+# install nvm
+checkNVMInstall
+
+# install VSCode
+checkVSCodeInstall
+
+# install Google Chrome
+checkGoogleChromeInstall
+
+
+
+
+
