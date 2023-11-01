@@ -134,9 +134,14 @@ function checkMKCERTInstall() {
     if [[ $? != 0 ]] ; then
         # Install mkcert
         customPrint "Installing mkcert ..." "info"
-        cmdInstallMkcert="brew install mkcert nss"
+
+        cmdInstallMkcert="brew install mkcert"
         customPrint "Running command: $On_IRed( $cmdInstallMkcert ) $Green" "info"
         $cmdInstallMkcert
+
+        # adding mkcert to local root CAs
+        cmdAddMkcert="mkcert -install"
+        customPrint "Running command: $On_IRed( $cmdInstallMkcert ) $Green" "info"
     else
         customPrint "mkcert is $On_IRed installed $Green ..." "info"
     fi
