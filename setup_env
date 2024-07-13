@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # =================================================================
 # Setup color constants
@@ -83,31 +83,52 @@ On_IWhite='\033[0;107m'   # White
 function customPrint() {
     msg=$1
     type="info"
-    if [ $2 != "" ]
+    if [ "$2" != "" ]
     then
         type=$2
     fi
-    #type=[[ $2 -ne "" ]] && echo $2 || echo "info"
-    
+
     if [ "$type" = "info" ]
     then
-        printf "$Green $msg $Black\n";
+        printf "${Green}$msg${Color_Off}\n";
+    elif [ "$type" = "error" ]
+    then
+        printf "${Red}$msg${Color_Off}\n";
+    elif [ "$type" = "warning" ]
+    then
+        printf "${Yellow}$msg${Color_Off}\n";
+    else
+        printf "$msg\n"
+    fi
+}
+
+function checkRosettaInstall() {
+    # check if Rosetta 2 is installed (needed for some x86_64 binaries)
+    customPrint "Checking if Rosetta 2 is installed ..." "info"
+    /usr/bin/pgrep oahd > /dev/null
+    if [[ $? != 0 ]] ; then
+        customPrint "Installing Rosetta 2 ..." "info"
+        /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+    else
+        customPrint "Rosetta 2 is already installed." "info"
     fi
 }
 
 function checkBrewInstall() {
-    # check if homebrew is installed
+    # check if Homebrew is installed
     customPrint "Checking if Homebrew is installed ..." "info"
     which -s brew
     if [[ $? != 0 ]] ; then
         # Install Homebrew
         customPrint "Installing Homebrew ..." "info"
-        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        # Add Homebrew to PATH
+        eval "$(/opt/homebrew/bin/brew shellenv)"
     else
         cmd="brew update"
         customPrint "Homebrew is installed ..." "info"
         customPrint "Running command ( $cmd )" "info"
-        #$cmd
+        $cmd
     fi
 }
 
@@ -122,10 +143,9 @@ function checkHTTPDInstall() {
         customPrint "Running command: ( $cmdInstallHttpd )" "info"
         $cmdInstallHttpd
     else
-        customPrint "httpd is $On_IRed installed $Green ..." "info"
+        customPrint "httpd is ${On_IRed}installed${Green} ..." "info"
     fi
 }
-
 
 function checkMKCERTInstall() {
     # check if mkcert is installed
@@ -134,19 +154,18 @@ function checkMKCERTInstall() {
     if [[ $? != 0 ]] ; then
         # Install mkcert
         customPrint "Installing mkcert ..." "info"
-
         cmdInstallMkcert="brew install mkcert"
-        customPrint "Running command: $On_IRed( $cmdInstallMkcert ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdInstallMkcert )${Green}" "info"
         $cmdInstallMkcert
 
         # adding mkcert to local root CAs
         cmdAddMkcert="mkcert -install"
-        customPrint "Running command: $On_IRed( $cmdInstallMkcert ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdAddMkcert )${Green}" "info"
+        $cmdAddMkcert
     else
-        customPrint "mkcert is $On_IRed installed $Green ..." "info"
+        customPrint "mkcert is ${On_IRed}installed${Green} ..." "info"
     fi
 }
-
 
 function checkMYSQLInstall() {
     # check if mysql is installed
@@ -156,31 +175,34 @@ function checkMYSQLInstall() {
         # Install mysql
         customPrint "Installing mysql ..." "info"
         cmdInstallMySql="brew install mysql"
-        customPrint "Running command: $On_IRed( $cmdInstallMySql ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdInstallMySql )${Green}" "info"
         $cmdInstallMySql
     else
-        customPrint "mysql is $On_IRed installed $Green ..." "info"
+        customPrint "mysql is ${On_IRed}installed${Green} ..." "info"
     fi
 }
-
 
 function checkNVMInstall() {
     # check if nvm is installed
     customPrint "Checking if nvm is installed ..." "info"
-    #which -s nvm
     nvm -v
-    echo $?
     if [[ $? != 0 ]] ; then
         # Install nvm
         customPrint "Installing nvm ..." "info"
         cmdInstallNVM="brew install nvm"
-        customPrint "Running command: $On_IRed( $cmdInstallNVM ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdInstallNVM )${Green}" "info"
         $cmdInstallNVM
+
+        # Create NVM directory and add to profile
+        mkdir ~/.nvm
+        echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.zshrc
+        echo '[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"' >> ~/.zshrc
+        echo '[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"' >> ~/.zshrc
+        source ~/.zshrc
     else
-        customPrint "nvm is $On_IRed installed $Green ..." "info"
+        customPrint "nvm is ${On_IRed}installed${Green} ..." "info"
     fi
 }
-
 
 function checkVSCodeInstall() {
     # check if vscode is installed
@@ -190,13 +212,27 @@ function checkVSCodeInstall() {
         # Install vscode
         customPrint "Installing vscode ..." "info"
         cmdInstallVsCode="brew install --cask visual-studio-code"
-        customPrint "Running command: $On_IRed( $cmdInstallVsCode ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdInstallVsCode )${Green}" "info"
         $cmdInstallVsCode
     else
-        customPrint "vscode is $On_IRed installed $Green ..." "info"
+        customPrint "vscode is ${On_IRed}installed${Green} ..." "info"
     fi
 }
 
+function checkWarpInstall() {
+    # check if Warp is installed
+    customPrint "Checking if Warp is installed ..." "info"
+    which -s warp
+    if [[ $? != 0 ]] ; then
+        # Install Warp
+        customPrint "Installing Warp ..." "info"
+        cmdInstallWarp="brew install --cask warp"
+        customPrint "Running command: ${On_IRed}( $cmdInstallWarp )${Green}" "info"
+        $cmdInstallWarp
+    else
+        customPrint "Warp is ${On_IRed}installed${Green} ..." "info"
+    fi
+}
 
 function checkGoogleChromeInstall() {
     # check if Chrome is installed
@@ -207,21 +243,21 @@ function checkGoogleChromeInstall() {
 
     if [ -x "$CHROMEPATH" ]; then
         # chrome is installed
-        customPrint "Chrome is $On_IRed installed $Green ..." "info"
+        customPrint "Chrome is ${On_IRed}installed${Green} ..." "info"
     else
         # chrome is not installed
         # Install Chrome
         customPrint "Installing Chrome ..." "info"
         cmdInstallChrome="brew install --cask google-chrome"
-        customPrint "Running command: $On_IRed( $cmdInstallChrome ) $Green" "info"
+        customPrint "Running command: ${On_IRed}( $cmdInstallChrome )${Green}" "info"
         $cmdInstallChrome
     fi
 }
 
+# Check if Rosetta 2 is needed and install if necessary
+checkRosettaInstall
 
-
-
-# check if brew exist and install if it doesn't
+# check if brew exists and install if it doesn't
 checkBrewInstall
 
 # install httpd
@@ -241,8 +277,3 @@ checkVSCodeInstall
 
 # install Google Chrome
 checkGoogleChromeInstall
-
-
-
-
-
