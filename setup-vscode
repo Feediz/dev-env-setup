@@ -1,16 +1,14 @@
 #!/bin/bash
-set -o errexit
+set -e
 
-# environment
+# Environment variables
 environment=${1:-php}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
 extensionListFile=${3:-https://gist.githubusercontent.com/Feediz/5bdb26b9bc396d95f12f53ba116a5452/raw/0dc008c9436eaa62f3467a5972eb852aa6aad843/extensions.txt}
 
-
+# Gist URLs
 extension_common=https://gist.githubusercontent.com/Feediz/c64b6f3682cd0fb8e3bd12fe807bcf09/raw/c585797069586ed250b246d9961fd4531d06a164/extensions_common.txt
-extension_common=https://gist.githubusercontent.com/Feediz/35405560919dfbf258172dfcd5ba3907/raw/aa9d339d1df07710149a0c1148b7fe03a3e25533/extensions_common1
 extension_themes=https://gist.githubusercontent.com/Feediz/6c39eef44201b1c3f450febf8be22cb3/raw/20ce8bf02e84a372129a4a1687ba4c51a3a3c55b/extensions_themes
-
 extension_python=https://gist.githubusercontent.com/Feediz/e0f457b138d865be256422c4150e600a/raw/8ba39aafd005761553449a74adcd22a7afca20a0/extensions_python.txt
 extension_docker=https://gist.githubusercontent.com/Feediz/d5bdb668244beaede55277357add8db1/raw/e3a7fcec0f0571871180ce85e557a60e10808778/extensions_docker.txt
 extension_db=https://gist.githubusercontent.com/Feediz/b2657fc56f06f1e6cc29f8a0660c35e6/raw/ab27c199b4de8060af4b3cad43edabd07a415dab/extensions_db.txt
@@ -20,231 +18,86 @@ extension_sfdc=https://gist.githubusercontent.com/Feediz/785ed873324bd2970ea7816
 extension_terraform=https://gist.githubusercontent.com/Feediz/569a65f0278b0a941dac2ecb785e4661/raw/c04ef351e2442ef3bdcee40f1cd3e341afb21451/extensions_terraform.txt
 extension_js=https://gist.githubusercontent.com/Feediz/edb471128211e926b00e612b9b6fb3ab/raw/20db20e89f9b7f072ca78ea3a50dcf9e26c8dc40/extensions_js.txt
 extension_php=https://gist.githubusercontent.com/Feediz/1f0f8a74ecc2470c15bba144fb8d0829/raw/43d2690e97013c63b7e8f72a53e753e9a854120e/extensions_php.txt
-
 bashAlias=https://gist.githubusercontent.com/Feediz/21faf54718773a0cd2af1a323f079bc4/raw/201c9dcc96b014bbaa481b2375a09617ddf34603/.bash_aliases
 
-extension=extensions.txt
+extension="extensions.txt"
 
-
-setup_bash_alias()
-{
-  # set up woo
-  echo "Setting up default bash aliase"
-  
-  # set up git template
-  curl -o ~/.bash_aliases $bashAlias
-  echo 'Setting up .bash_aliases file'
-
-  #echo 'removing bash_aliases template file'
-  #rm $bashAlias
-  echo "Adding .bash_aliases to .zshrc"
-
-  # add an include to bash_aliases to the .zshrc if it exists
-  bashAliasVar="\n
-  if [ -f ~/.bash_aliases ]; then\n
-   \t . ~/.bash_aliases\n
-  fi
-  "
-  
-  echo -e "\n"
-  echo -e "\n"
-  echo -e $bashAliasVar >> ~/.zshrc
-
-  # source ~/.bash_aliases
-  source ~/.zshrc
-
-  echo 'bash aliases set up complete' 
+# Function to display available environments
+show_available_environments() {
+    echo "Available environments:"
+    echo "  php        - PHP development"
+    echo "  python     - Python development"
+    echo "  js         - JavaScript development"
+    echo "  terraform  - Terraform development"
+    echo "  newrelic   - New Relic development"
+    echo "  docker     - Docker development"
+    echo "  db         - Database development"
+    echo "  sfdc       - Salesforce development"
+    echo "  magento    - Magento development"
+    echo "  woo        - WooCommerce development"
+    echo "  ansible    - Ansible development"
+    echo "  bash       - Bash alias setup"
+    echo
+    echo "Usage: $0 [environment] [gitTemplateFile] [extensionListFile]"
 }
 
-
-setup_common()
-{
-  # set up common configuration
-  echo "Setting up environment for common development configuration"
-  
-  # set up git template
-  curl -o ~/.gitmessage $gitTemplateFile
-  echo 'Setting up git commit message template'
-  git config --global commit.template ~/.gitmessage
-
-  echo 'Installing vscode extensions from'
-  echo $extension_common
-  #echo $extensionListFile
-
-  # set up vscode common extensions
-  curl -o $extension $extension_common
-  cat $extension | xargs -L 1 code --install-extension
-  echo 'removing extensions file'
-  rm $extension
-
-  # install vscode themes extensions
-  curl -o $extension $extension_themes
-  cat $extension | xargs -L 1 code --install-extension
-  echo 'removing extensions file'
-  rm $extension
-  
-  echo 'Setting up bash'
-  setup_bash_alias
-  
-  
-  if [ $environment == 'php' ]
-  then
-    # php setup
-    setup_php
-  elif [ $environment == 'python' ] 
-  then
-    # python setup
-    setup_python
-  elif [ $environment == 'js' ] 
-  then
-    # js setup
-    setup_js
-  elif [ $environment == 'terraform' ] 
-  then
-    # terraform setup
-    setup_terraform
-  elif [ $environment == 'newrelic' ] 
-  then
-    # new relic setup
-    setup_newrelic
-  elif [ $environment == 'docker' ] 
-  then
-    # docker setup
-    setup_docker
-  elif [ $environment == 'db' ] 
-  then
-    # db setup
-    setup_db
-  elif [ $environment == 'sfdc' ] 
-  then
-    # sfdc setup
-    setup_sfdc
-  elif [ $environment == 'magento' ] 
-  then
-    # magento setup
-    setup_magento
-  else
-    # default
-    setup_php
-  fi
-
-  echo 'VSCode Setup Completed' 
+# Function to install VSCode extensions from a URL
+install_extensions() {
+    local url=$1
+    curl -o $extension $url
+    cat $extension | xargs -L 1 code --install-extension
+    rm $extension
 }
 
-
-setup_python()
-{
-  # set up woo
-  echo "Setting up environment for python development"
-
-  echo 'Installing vscode extensions from'
-  echo $extension_python
-  #echo $extensionListFile
-
-  # set up vscode extensions
-  curl -o $extension $extension_python
-  cat $extension | xargs -L 1 code --install-extension
-
-  echo 'removing extensions file'
-  rm $extension
-
-  echo 'VSCode Setup Completed' 
+# Function to set up bash aliases
+setup_bash_alias() {
+    echo "Setting up default bash aliases"
+    curl -o ~/.bash_aliases $bashAlias
+    echo -e "\nif [ -f ~/.bash_aliases ]; then\n\t. ~/.bash_aliases\nfi" >> ~/.zshrc
+    source ~/.zshrc
+    echo "bash aliases set up complete"
 }
 
-
-setup_woo()
-{
-  # set up woo
-  echo "Setting up environment for woocommerce"
-  # set up git template
-  curl -o ~/.gitmessage $gitTemplateFile
-  echo 'Setting up git commit message template'
-  git config --global commit.template ~/.gitmessage
-
-  echo 'Installing vscode extensions from'
-  echo $extensionListFile
-
-  # set up vscode extensions
-  curl -o $extension $extensionListFile
-  cat $extension | xargs -L 1 code --install-extension
-
-  echo 'removing extensions file'
-  rm $extension
-
-  echo 'VSCode Setup Completed' 
+# Function to set up common configuration
+setup_common() {
+    echo "Setting up environment for common development configuration"
+    curl -o ~/.gitmessage $gitTemplateFile
+    git config --global commit.template ~/.gitmessage
+    install_extensions $extension_common
+    install_extensions $extension_themes
+    setup_bash_alias
+    setup_environment $environment
+    echo "VSCode Setup Completed"
 }
 
-setup_magento()
-{
-  # set up magento
-  echo "Setting up environment for magento"
-  # set up git template
-  curl -o ~/.gitmessage $gitTemplateFile
-  echo 'Setting up git commit message template'
-  git config --global commit.template ~/.gitmessage
-
-  echo 'Installing vscode extensions from'
-  echo $extensionListFile
-
-  # set up vscode extensions
-  curl -o $extension $extensionListFile
-  cat $extension | xargs -L 1 code --install-extension
-
-  echo 'removing extensions file'
-  rm $extension
-
-  echo 'VSCode Setup Completed' 
+# Function to set up environment-specific configurations
+setup_environment() {
+    local env=$1
+    case $env in
+        php) install_extensions $extension_php ;;
+        python) install_extensions $extension_python ;;
+        js) install_extensions $extension_js ;;
+        terraform) install_extensions $extension_terraform ;;
+        newrelic) install_extensions $extension_newrelic ;;
+        docker) install_extensions $extension_docker ;;
+        db) install_extensions $extension_db ;;
+        sfdc) install_extensions $extension_sfdc ;;
+        magento) install_extensions $extension_magento ;;
+        woo) install_extensions $extension_magento ;;  # WooCommerce is under Magento
+        ansible) install_extensions $extension_magento ;;  # Example: Ansible under Magento
+        bash) setup_bash_alias ;;
+        *) 
+            echo "Unknown environment: $env"
+            show_available_environments
+            exit 1
+            ;;
+    esac
 }
 
-setup_ansible()
-{
-  # set up ansible
-  echo "Setting up environment for ansible"
-  # set up git template
-  curl -o ~/.gitmessage $gitTemplateFile
-  echo 'Setting up git commit message template'
-  git config --global commit.template ~/.gitmessage
-
-  echo 'Installing vscode extensions from'
-  echo $extensionListFile
-
-  # set up vscode extensions
-  curl -o $extension $extensionListFile
-  cat $extension | xargs -L 1 code --install-extension
-
-  echo 'removing extensions file'
-  rm $extension
-
-  echo 'VSCode Setup Completed' 
-}
-
-
-
-# the different environments
-# woo, magento, ansible
-
-# set up common configuration first
-setup_common
-
-if [ $environment == 'woo' ]
-then
-  woo setup
- setup_woo
-elif [ $environment == 'magento' ] 
-then
-  magento setup
- setup_magento
-elif [ $environment == 'ansible' ] 
-then
-  ansible setup
- setup_ansible
-elif [ $environment == 'bash' ] 
-then
-  bash alias setup
- setup_bash_alias
-# else
-#   default
-#  setup_woo
+# Main script execution
+if [[ $environment == "help" || $environment == "--help" || $environment == "-h" ]]; then
+    show_available_environments
+    exit 0
 fi
 
-# curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vscode | bash -s -- woo
+setup_common
