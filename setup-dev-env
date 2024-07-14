@@ -80,106 +80,161 @@ On_IWhite='\033[0;107m'   # White
 # =================================================================
 # Functions
 # =================================================================
-function customPrint() {
-    msg=$1
-    type="info"
-    if [ $2 != "" ]
-    then
-        type=$2
-    fi
-    #type=[[ $2 -ne "" ]] && echo $2 || echo "info"
+customPrint() {
+    local msg="$1"
+    local type="${2:-info}"
     
-    if [ "$type" = "info" ]
-    then
-        printf "$Green $msg $Black\n";
-    fi
+    case "$type" in
+        info)
+            printf "${Green}${msg}${Color_Off}\n"
+            ;;
+        warning)
+            printf "${Yellow}${msg}${Color_Off}\n"
+            ;;
+        error)
+            printf "${Red}${msg}${Color_Off}\n"
+            ;;
+        *)
+            printf "${White}${msg}${Color_Off}\n"
+            ;;
+    esac
 }
 
-
-function customPrintCMD() {
-    cmd=$1
+customPrintCMD() {
+    local cmd="$1"
     customPrint "Running the following command: [$cmd]" "info"
 }
 
-
-function runCMD() {
-    cmd=$1
+runCMD() {
+    local cmd="$1"
     customPrintCMD "$cmd"
-    $cmd
+    eval "$cmd"
+    if [ $? -ne 0 ]; then
+        customPrint "Command failed: [$cmd]" "error"
+        exit 1
+    fi
 }
 
-# get the new folder/url name
-project_name=$1
+showUsage() {
+    customPrint "Usage: $0 {setup|delete} project_name" "info"
+    customPrint "  setup:  Sets up a new project with the given project_name" "info"
+    customPrint "  delete: Deletes the project with the given project_name" "info"
+    customPrint "Example:" "info"
+    customPrint "  $0 setup myproject.test" "info"
+    customPrint "  $0 delete myproject.test" "info"
+}
 
-# path of www
-www_path=/Users/fidelh/www
-www_path=~/www
+setupProject() {
+    local project_name="$1"
+    local www_path="${2:-/Users/fidelh/www}"
+    local vhost_file_path="${3:-/usr/local/etc/httpd/extra/httpd-vhosts.conf}"
 
-# path to vhost file
-vhost_file_path=/usr/local/etc/httpd/extra/httpd-vhosts.conf
+    if [ -z "$project_name" ]; then
+        customPrint "A Project name is required, please call this function as [ ~/setup-dev-env project_name.test ]" "error"
+        exit 1
+    fi
 
-if [ "$project_name" = "" ]
-then
-    echo "A Project name is required, please call this function as [ ~/setup-dev-env project_name.test ]"
+    # set up directory
+    runCMD "cp -a $www_path/template_env/. $www_path/$project_name"
+
+    # cd into the project
+    runCMD "cd $www_path/$project_name/ssl_certs"
+
+    # make the cert
+    runCMD "mkcert $project_name"
+
+    # append to vhost file
+    sudo cp "$vhost_file_path" "${vhost_file_path}.original"
+    {
+        echo ""
+        echo "# ================================================================================================="
+        echo "#                                   $project_name"
+        echo "# ================================================================================================="
+        echo "<VirtualHost *:80>"
+        echo "    ServerAdmin fidel@test.com"
+        echo "    ServerName $project_name"
+        echo "    DocumentRoot $www_path/$project_name"
+        echo "    ErrorLog $www_path/$project_name/Logs/error.log"
+        echo "    # CustomLog $www_path/$project_name/access.log"
+        echo ""
+        echo "    <Directory $www_path/$project_name>"
+        echo "        Require all granted"
+        echo "        AllowOverride All"
+        echo "    </Directory>"
+        echo "</VirtualHost>"
+        echo ""
+        echo "<IfModule mod_ssl.c>"
+        echo "    <VirtualHost *:443>"
+        echo "        ServerAdmin fidel@test.com"
+        echo "        ServerName $project_name"
+        echo "        DocumentRoot $www_path/$project_name"
+        echo "        ErrorLog $www_path/$project_name/Logs/error.log"
+        echo "        # CustomLog $www_path/$project_name/access.log"
+        echo "        SSLEngine On"
+        echo "        SSLCertificateFile $www_path/$project_name/ssl_certs/$project_name.pem"
+        echo "        SSLCertificateKeyFile $www_path/$project_name/ssl_certs/$project_name-key.pem"
+        echo "        <Directory $www_path/$project_name>"
+        echo "            AllowOverride All"
+        echo "            Options Indexes FollowSymLinks"
+        echo "            Require all granted"
+        echo "        </Directory>"
+        echo "    </VirtualHost>"
+        echo "</IfModule>"
+        echo ""
+    } | sudo tee -a "$vhost_file_path" > /dev/null
+
+    # append to hosts file
+    sudo cp /etc/hosts /etc/hosts.original
+    echo "127.0.0.1    $project_name" | sudo tee -a /etc/hosts > /dev/null
+
+    # restart all services
+    runCMD "brew services restart --all"
+}
+
+deleteProject() {
+    local project_name="$1"
+    local www_path="${2:-/Users/fidelh/www}"
+    local vhost_file_path="${3:-/usr/local/etc/httpd/extra/httpd-vhosts.conf}"
+
+    if [ -z "$project_name" ]; then
+        customPrint "A Project name is required, please call this function as [ ~/setup-dev-env delete project_name.test ]" "error"
+        exit 1
+    fi
+
+    # Remove project directory
+    runCMD "rm -rf $www_path/$project_name"
+
+    # Remove virtual host entry from vhost file
+    sudo cp "$vhost_file_path" "${vhost_file_path}.original"
+    sudo sed -i '' "/#                                   $project_name/,/# =================================================================================================/d" "$vhost_file_path"
+
+    # Remove entry from hosts file
+    sudo cp /etc/hosts /etc/hosts.original
+    sudo sed -i '' "/127.0.0.1[[:space:]]*$project_name/d" /etc/hosts
+
+    # Restart all services
+    runCMD "brew services restart --all"
+}
+
+# get the action and the new folder/url name
+action=$1
+project_name=$2
+
+if [ -z "$action" ] || [ -z "$project_name" ]; then
+    showUsage
     exit 1
 fi
 
-# set up directory
-runCMD "cp -a $www_path/template_env/. $www_path/$project_name"
-
-# cd into the project
-runCMD "cd $www_path/$project_name/ssl_certs"
-
-# make the cert
-runCMD "mkcert $project_name"
-
-# append to vhost file
-cp $vhost_file_path ${vhost_file_path}.original
-echo "" >> $vhost_file_path
-echo "# =================================================================================================" >> $vhost_file_path
-echo "#                                   $project_name" >> $vhost_file_path
-echo "# =================================================================================================" >> $vhost_file_path
-echo "<VirtualHost *:80>" >> $vhost_file_path
-echo "\t    ServerAdmin fidel@test.com" >> $vhost_file_path
-echo "\t    ServerName $project_name" >> $vhost_file_path
-echo "\t    DocumentRoot /Users/fidelh/www/$project_name" >> $vhost_file_path
-echo "\t    ErrorLog /Users/fidelh/www/$project_name/Logs/error.log" >> $vhost_file_path
-echo "\t    # CustomLog /Users/fidelh/www/$project_name/access.log" >> $vhost_file_path
-echo "" >> $vhost_file_path
-echo "\t    <Directory /Users/fidelh/www/$project_name>" >> $vhost_file_path
-echo "\t\t        Require all granted" >> $vhost_file_path
-echo "\t\t        AllowOverride All" >> $vhost_file_path
-echo "\t    </Directory>" >> $vhost_file_path
-echo "</VirtualHost>" >> $vhost_file_path
-echo "" >> $vhost_file_path
-echo "<IfModule mod_ssl.c>" >> $vhost_file_path
-echo "\t    <VirtualHost *:443>" >> $vhost_file_path
-echo "\t\t        ServerAdmin fidel@test.com" >> $vhost_file_path
-echo "\t\t        ServerName $project_name" >> $vhost_file_path
-echo "\t\t        DocumentRoot /Users/fidelh/www/$project_name" >> $vhost_file_path
-echo "\t\t        ErrorLog /Users/fidelh/www/$project_name/Logs/error.log" >> $vhost_file_path
-echo "\t\t        # CustomLog /Users/fidelh/www/$project_name/access.log" >> $vhost_file_path
-echo "\t\t        SSLEngine On" >> $vhost_file_path
-echo "\t\t        SSLCertificateFile /Users/fidelh/www/$project_name/ssl_certs/$project_name.pem" >> $vhost_file_path
-echo "\t\t        SSLCertificateKeyFile /Users/fidelh/www/$project_name/ssl_certs/$project_name-key.pem" >> $vhost_file_path
-echo "\t\t        <Directory /Users/fidelh/www/$project_name>" >> $vhost_file_path
-echo "\t\t\t            AllowOverride All" >> $vhost_file_path
-echo "\t\t\t            Options Indexes FollowSymLinks" >> $vhost_file_path
-echo "\t\t\t            Require all granted" >> $vhost_file_path
-echo "\t\t        </Directory>" >> $vhost_file_path
-echo "\t    </VirtualHost>" >> $vhost_file_path
-echo "</IfModule>" >> $vhost_file_path
-echo "" >> $vhost_file_path
-echo "" >> $vhost_file_path
-echo "" >> $vhost_file_path
-
-
-# append to host file
-cp /etc/hosts /etc/hosts.original
-echo "127.0.0.1	$project_name" >> /etc/hosts
-
-# restart all services
-brew services restart --all
-
-
-
+case "$action" in
+    setup)
+        setupProject "$project_name"
+        ;;
+    delete)
+        deleteProject "$project_name"
+        ;;
+    *)
+        customPrint "Invalid action: $action" "error"
+        showUsage
+        exit 1
+        ;;
+esac
