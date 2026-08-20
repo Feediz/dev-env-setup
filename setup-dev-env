@@ -108,6 +108,10 @@ customPrintCMD() {
 runCMD() {
     local cmd="$1"
     customPrintCMD "$cmd"
+    if [ "$DRY_RUN" = "true" ]; then
+        customPrint "[DRY RUN] Skipping execution" "warning"
+        return 0
+    fi
     eval "$cmd"
     if [ $? -ne 0 ]; then
         customPrint "Command failed: [$cmd]" "error"
@@ -116,12 +120,54 @@ runCMD() {
 }
 
 showUsage() {
-    customPrint "Usage: $0 {setup|delete} project_name" "info"
+    customPrint "Usage: $0 {setup|delete} project_name [--dry-run]" "info"
     customPrint "  setup:  Sets up a new project with the given project_name" "info"
     customPrint "  delete: Deletes the project with the given project_name" "info"
     customPrint "Example:" "info"
     customPrint "  $0 setup myproject.test" "info"
     customPrint "  $0 delete myproject.test" "info"
+}
+
+vhostBlock() {
+    local project_name="$1"
+    local www_path="$2"
+    local server_admin="$3"
+
+    echo ""
+    echo "# ================================================================================================="
+    echo "#                                   $project_name"
+    echo "# ================================================================================================="
+    echo "<VirtualHost *:80>"
+    echo "    ServerAdmin $server_admin"
+    echo "    ServerName $project_name"
+    echo "    DocumentRoot $www_path/$project_name"
+    echo "    ErrorLog $www_path/$project_name/Logs/error.log"
+    echo "    # CustomLog $www_path/$project_name/access.log"
+    echo ""
+    echo "    <Directory $www_path/$project_name>"
+    echo "        Require all granted"
+    echo "        AllowOverride All"
+    echo "    </Directory>"
+    echo "</VirtualHost>"
+    echo ""
+    echo "<IfModule mod_ssl.c>"
+    echo "    <VirtualHost *:443>"
+    echo "        ServerAdmin $server_admin"
+    echo "        ServerName $project_name"
+    echo "        DocumentRoot $www_path/$project_name"
+    echo "        ErrorLog $www_path/$project_name/Logs/error.log"
+    echo "        # CustomLog $www_path/$project_name/access.log"
+    echo "        SSLEngine On"
+    echo "        SSLCertificateFile $www_path/$project_name/ssl_certs/$project_name.pem"
+    echo "        SSLCertificateKeyFile $www_path/$project_name/ssl_certs/$project_name-key.pem"
+    echo "        <Directory $www_path/$project_name>"
+    echo "            AllowOverride All"
+    echo "            Options Indexes FollowSymLinks"
+    echo "            Require all granted"
+    echo "        </Directory>"
+    echo "    </VirtualHost>"
+    echo "</IfModule>"
+    echo ""
 }
 
 setupProject() {
@@ -150,49 +196,22 @@ setupProject() {
     runCMD "mkcert $project_name"
 
     # append to vhost file
-    sudo cp "$vhost_file_path" "${vhost_file_path}.original"
-    {
-        echo ""
-        echo "# ================================================================================================="
-        echo "#                                   $project_name"
-        echo "# ================================================================================================="
-        echo "<VirtualHost *:80>"
-        echo "    ServerAdmin $server_admin"
-        echo "    ServerName $project_name"
-        echo "    DocumentRoot $www_path/$project_name"
-        echo "    ErrorLog $www_path/$project_name/Logs/error.log"
-        echo "    # CustomLog $www_path/$project_name/access.log"
-        echo ""
-        echo "    <Directory $www_path/$project_name>"
-        echo "        Require all granted"
-        echo "        AllowOverride All"
-        echo "    </Directory>"
-        echo "</VirtualHost>"
-        echo ""
-        echo "<IfModule mod_ssl.c>"
-        echo "    <VirtualHost *:443>"
-        echo "        ServerAdmin $server_admin"
-        echo "        ServerName $project_name"
-        echo "        DocumentRoot $www_path/$project_name"
-        echo "        ErrorLog $www_path/$project_name/Logs/error.log"
-        echo "        # CustomLog $www_path/$project_name/access.log"
-        echo "        SSLEngine On"
-        echo "        SSLCertificateFile $www_path/$project_name/ssl_certs/$project_name.pem"
-        echo "        SSLCertificateKeyFile $www_path/$project_name/ssl_certs/$project_name-key.pem"
-        echo "        <Directory $www_path/$project_name>"
-        echo "            AllowOverride All"
-        echo "            Options Indexes FollowSymLinks"
-        echo "            Require all granted"
-        echo "        </Directory>"
-        echo "    </VirtualHost>"
-        echo "</IfModule>"
-        echo ""
-    } | sudo tee -a "$vhost_file_path" > /dev/null
+    if [ "$DRY_RUN" = "true" ]; then
+        customPrint "[DRY RUN] Would append the following to $vhost_file_path:" "warning"
+        vhostBlock "$project_name" "$www_path" "$server_admin"
+    else
+        sudo cp "$vhost_file_path" "${vhost_file_path}.original"
+        vhostBlock "$project_name" "$www_path" "$server_admin" | sudo tee -a "$vhost_file_path" > /dev/null
+    fi
 
     # append to hosts file
     if ! grep -q "127.0.0.1[[:space:]]*$project_name\$" /etc/hosts; then
-        sudo cp /etc/hosts /etc/hosts.original
-        echo "127.0.0.1    $project_name" | sudo tee -a /etc/hosts > /dev/null
+        if [ "$DRY_RUN" = "true" ]; then
+            customPrint "[DRY RUN] Would append '127.0.0.1    $project_name' to /etc/hosts" "warning"
+        else
+            sudo cp /etc/hosts /etc/hosts.original
+            echo "127.0.0.1    $project_name" | sudo tee -a /etc/hosts > /dev/null
+        fi
     fi
 
     # restart all services
@@ -213,16 +232,37 @@ deleteProject() {
     runCMD "rm -rf $www_path/$project_name"
 
     # Remove virtual host entry from vhost file
-    sudo cp "$vhost_file_path" "${vhost_file_path}.original"
-    sudo sed -i '' "/#                                   $project_name/,/# =================================================================================================/d" "$vhost_file_path"
+    if [ "$DRY_RUN" = "true" ]; then
+        customPrint "[DRY RUN] Would remove the vhost entry for [$project_name] from $vhost_file_path" "warning"
+    else
+        sudo cp "$vhost_file_path" "${vhost_file_path}.original"
+        sudo sed -i '' "/#                                   $project_name/,/# =================================================================================================/d" "$vhost_file_path"
+    fi
 
     # Remove entry from hosts file
-    sudo cp /etc/hosts /etc/hosts.original
-    sudo sed -i '' "/127.0.0.1[[:space:]]*$project_name/d" /etc/hosts
+    if [ "$DRY_RUN" = "true" ]; then
+        customPrint "[DRY RUN] Would remove the /etc/hosts entry for [$project_name]" "warning"
+    else
+        sudo cp /etc/hosts /etc/hosts.original
+        sudo sed -i '' "/127.0.0.1[[:space:]]*$project_name/d" /etc/hosts
+    fi
 
     # Restart all services
     runCMD "brew services restart --all"
 }
+
+# Dry-run support: strip --dry-run out of the args wherever it appears,
+# leaving the remaining positional args (action, project_name) in place.
+DRY_RUN=false
+args=""
+for arg in "$@"; do
+    if [ "$arg" = "--dry-run" ]; then
+        DRY_RUN=true
+    else
+        args="$args $arg"
+    fi
+done
+set -- $args
 
 # get the action and the new folder/url name
 action=$1
@@ -231,6 +271,10 @@ project_name=$2
 if [ -z "$action" ] || [ -z "$project_name" ]; then
     showUsage
     exit 1
+fi
+
+if [ "$DRY_RUN" = "true" ]; then
+    customPrint "Running in DRY RUN mode - no changes will be made." "warning"
 fi
 
 case "$action" in

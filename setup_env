@@ -1,6 +1,16 @@
 #!/bin/bash
 
 # =================================================================
+# Dry-run support
+# =================================================================
+DRY_RUN=false
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+    esac
+done
+
+# =================================================================
 # Setup color constants
 # =================================================================
 # Reset
@@ -102,13 +112,23 @@ function customPrint() {
     fi
 }
 
+function runCMD() {
+    local cmd="$1"
+    if [ "$DRY_RUN" = true ] ; then
+        customPrint "[DRY RUN] Would run: ( $cmd )" "warning"
+    else
+        customPrint "Running command: ( $cmd )" "info"
+        eval "$cmd"
+    fi
+}
+
 function checkRosettaInstall() {
     # check if Rosetta 2 is installed (needed for some x86_64 binaries)
     customPrint "Checking if Rosetta 2 is installed ..." "info"
     /usr/bin/pgrep oahd > /dev/null
     if [[ $? != 0 ]] ; then
         customPrint "Installing Rosetta 2 ..." "info"
-        /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+        runCMD "/usr/sbin/softwareupdate --install-rosetta --agree-to-license"
     else
         customPrint "Rosetta 2 is already installed." "info"
     fi
@@ -120,15 +140,17 @@ function checkBrewInstall() {
     which -s brew
     if [[ $? != 0 ]] ; then
         # Install Homebrew
-        customPrint "Installing Homebrew ..." "info"
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        # Add Homebrew to PATH
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+        if [ "$DRY_RUN" = true ] ; then
+            customPrint "[DRY RUN] Would install Homebrew via the official install script" "warning"
+        else
+            customPrint "Installing Homebrew ..." "info"
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            # Add Homebrew to PATH
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
     else
-        cmd="brew update"
         customPrint "Homebrew is installed ..." "info"
-        customPrint "Running command ( $cmd )" "info"
-        $cmd
+        runCMD "brew update"
     fi
 }
 
@@ -139,9 +161,7 @@ function checkHTTPDInstall() {
     if [[ $? != 0 ]] ; then
         # Install httpd
         customPrint "Installing httpd ..." "info"
-        cmdInstallHttpd="brew install httpd"
-        customPrint "Running command: ( $cmdInstallHttpd )" "info"
-        $cmdInstallHttpd
+        runCMD "brew install httpd"
     else
         customPrint "httpd is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -154,14 +174,10 @@ function checkMKCERTInstall() {
     if [[ $? != 0 ]] ; then
         # Install mkcert
         customPrint "Installing mkcert ..." "info"
-        cmdInstallMkcert="brew install mkcert"
-        customPrint "Running command: ${On_IRed}( $cmdInstallMkcert )${Green}" "info"
-        $cmdInstallMkcert
+        runCMD "brew install mkcert"
 
         # adding mkcert to local root CAs
-        cmdAddMkcert="mkcert -install"
-        customPrint "Running command: ${On_IRed}( $cmdAddMkcert )${Green}" "info"
-        $cmdAddMkcert
+        runCMD "mkcert -install"
     else
         customPrint "mkcert is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -174,9 +190,7 @@ function checkMYSQLInstall() {
     if [[ $? != 0 ]] ; then
         # Install mysql
         customPrint "Installing mysql ..." "info"
-        cmdInstallMySql="brew install mysql"
-        customPrint "Running command: ${On_IRed}( $cmdInstallMySql )${Green}" "info"
-        $cmdInstallMySql
+        runCMD "brew install mysql"
     else
         customPrint "mysql is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -191,7 +205,7 @@ function checkNVMInstall() {
         # Install nvm via the official installer (Homebrew's nvm formula is not
         # recommended by Homebrew itself for managing Node versions)
         customPrint "Installing nvm ..." "info"
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+        runCMD "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
     fi
 }
 
@@ -202,9 +216,7 @@ function checkVSCodeInstall() {
     if [[ $? != 0 ]] ; then
         # Install vscode
         customPrint "Installing vscode ..." "info"
-        cmdInstallVsCode="brew install --cask visual-studio-code"
-        customPrint "Running command: ${On_IRed}( $cmdInstallVsCode )${Green}" "info"
-        $cmdInstallVsCode
+        runCMD "brew install --cask visual-studio-code"
     else
         customPrint "vscode is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -217,9 +229,7 @@ function checkWarpInstall() {
     if [[ $? != 0 ]] ; then
         # Install Warp
         customPrint "Installing Warp ..." "info"
-        cmdInstallWarp="brew install --cask warp"
-        customPrint "Running command: ${On_IRed}( $cmdInstallWarp )${Green}" "info"
-        $cmdInstallWarp
+        runCMD "brew install --cask warp"
     else
         customPrint "Warp is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -239,9 +249,7 @@ function checkGoogleChromeInstall() {
         # chrome is not installed
         # Install Chrome
         customPrint "Installing Chrome ..." "info"
-        cmdInstallChrome="brew install --cask google-chrome"
-        customPrint "Running command: ${On_IRed}( $cmdInstallChrome )${Green}" "info"
-        $cmdInstallChrome
+        runCMD "brew install --cask google-chrome"
     fi
 }
 
@@ -252,9 +260,7 @@ function checkDotnetInstall() {
     if [[ $? != 0 ]] ; then
         # Install .NET SDK
         customPrint "Installing .NET SDK ..." "info"
-        cmdInstallDotnet="brew install --cask dotnet-sdk"
-        customPrint "Running command: ${On_IRed}( $cmdInstallDotnet )${Green}" "info"
-        $cmdInstallDotnet
+        runCMD "brew install --cask dotnet-sdk"
     else
         customPrint ".NET SDK is ${On_IRed}installed${Green} ..." "info"
     fi
@@ -267,15 +273,14 @@ function checkJDKInstall() {
     if [[ $? != 0 ]] ; then
         # Install OpenJDK
         customPrint "Installing OpenJDK ..." "info"
-        cmdInstallJDK="brew install openjdk"
-        customPrint "Running command: ${On_IRed}( $cmdInstallJDK )${Green}" "info"
-        $cmdInstallJDK
+        runCMD "brew install openjdk"
 
         # Register the JDK with the system so /usr/libexec/java_home can find it
         jdkSymlink="/Library/Java/JavaVirtualMachines/openjdk.jdk"
         if [ ! -e "$jdkSymlink" ]; then
             customPrint "Linking OpenJDK into /Library/Java/JavaVirtualMachines ..." "info"
-            sudo ln -sfn "$(brew --prefix)/opt/openjdk/libexec/openjdk.jdk" "$jdkSymlink"
+            jdkSymlinkTarget="$(brew --prefix)/opt/openjdk/libexec/openjdk.jdk"
+            runCMD "sudo ln -sfn \"$jdkSymlinkTarget\" \"$jdkSymlink\""
         fi
     else
         customPrint "A JDK is ${On_IRed}installed${Green} ..." "info"
@@ -289,13 +294,15 @@ function checkCommandBoxInstall() {
     if [[ $? != 0 ]] ; then
         # Install CommandBox
         customPrint "Installing CommandBox ..." "info"
-        cmdInstallCommandBox="brew install commandbox"
-        customPrint "Running command: ${On_IRed}( $cmdInstallCommandBox )${Green}" "info"
-        $cmdInstallCommandBox
+        runCMD "brew install commandbox"
     else
         customPrint "CommandBox is ${On_IRed}installed${Green} ..." "info"
     fi
 }
+
+if [ "$DRY_RUN" = true ] ; then
+    customPrint "Running in DRY RUN mode - no changes will be made." "warning"
+fi
 
 # Check if Rosetta 2 is needed and install if necessary
 checkRosettaInstall
