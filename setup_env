@@ -185,22 +185,13 @@ function checkMYSQLInstall() {
 function checkNVMInstall() {
     # check if nvm is installed
     customPrint "Checking if nvm is installed ..." "info"
-    nvm -v
-    if [[ $? != 0 ]] ; then
-        # Install nvm
-        customPrint "Installing nvm ..." "info"
-        cmdInstallNVM="brew install nvm"
-        customPrint "Running command: ${On_IRed}( $cmdInstallNVM )${Green}" "info"
-        $cmdInstallNVM
-
-        # Create NVM directory and add to profile
-        mkdir ~/.nvm
-        echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.zshrc
-        echo '[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"' >> ~/.zshrc
-        echo '[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"' >> ~/.zshrc
-        source ~/.zshrc
-    else
+    if [ -s "$HOME/.nvm/nvm.sh" ] ; then
         customPrint "nvm is ${On_IRed}installed${Green} ..." "info"
+    else
+        # Install nvm via the official installer (Homebrew's nvm formula is not
+        # recommended by Homebrew itself for managing Node versions)
+        customPrint "Installing nvm ..." "info"
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
     fi
 }
 

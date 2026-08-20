@@ -43,10 +43,10 @@ show_available_environments() {
 
 # Function to install VSCode extensions from a URL
 install_extensions() {
-    local url=$1
-    curl -o $extension $url
-    cat $extension | xargs -L 1 code --install-extension
-    rm $extension
+    local url="$1"
+    curl -o "$extension" "$url"
+    xargs -L 1 code --install-extension < "$extension"
+    rm "$extension"
 }
 
 # Function to set up bash aliases
@@ -61,32 +61,35 @@ setup_bash_alias() {
 # Function to set up common configuration
 setup_common() {
     echo "Setting up environment for common development configuration"
-    curl -o ~/.gitmessage $gitTemplateFile
+    curl -o ~/.gitmessage "$gitTemplateFile"
     git config --global commit.template ~/.gitmessage
-    install_extensions $extension_common
-    install_extensions $extension_themes
+    install_extensions "$extension_common"
+    install_extensions "$extension_themes"
     setup_bash_alias
-    setup_environment $environment
+    setup_environment "$environment"
     echo "VSCode Setup Completed"
 }
 
 # Function to set up environment-specific configurations
 setup_environment() {
-    local env=$1
-    case $env in
-        php) install_extensions $extension_php ;;
-        python) install_extensions $extension_python ;;
-        js) install_extensions $extension_js ;;
-        terraform) install_extensions $extension_terraform ;;
-        newrelic) install_extensions $extension_newrelic ;;
-        docker) install_extensions $extension_docker ;;
-        db) install_extensions $extension_db ;;
-        sfdc) install_extensions $extension_sfdc ;;
-        magento) install_extensions $extension_magento ;;
-        woo) install_extensions $extension_magento ;;  # WooCommerce is under Magento
-        ansible) install_extensions $extension_magento ;;  # Example: Ansible under Magento
+    local env="$1"
+    case "$env" in
+        php) install_extensions "$extension_php" ;;
+        python) install_extensions "$extension_python" ;;
+        js) install_extensions "$extension_js" ;;
+        terraform) install_extensions "$extension_terraform" ;;
+        newrelic) install_extensions "$extension_newrelic" ;;
+        docker) install_extensions "$extension_docker" ;;
+        db) install_extensions "$extension_db" ;;
+        sfdc) install_extensions "$extension_sfdc" ;;
+        magento) install_extensions "$extension_magento" ;;
+        woo|ansible)
+            echo "No extension list is configured yet for '$env'."
+            show_available_environments
+            exit 1
+            ;;
         bash) setup_bash_alias ;;
-        *) 
+        *)
             echo "Unknown environment: $env"
             show_available_environments
             exit 1
@@ -95,7 +98,7 @@ setup_environment() {
 }
 
 # Main script execution
-if [[ $environment == "help" || $environment == "--help" || $environment == "-h" ]]; then
+if [[ "$environment" == "help" || "$environment" == "--help" || "$environment" == "-h" ]]; then
     show_available_environments
     exit 0
 fi

@@ -127,10 +127,16 @@ showUsage() {
 setupProject() {
     local project_name="$1"
     local www_path="${2:-/Users/fidelh/www}"
-    local vhost_file_path="${3:-/usr/local/etc/httpd/extra/httpd-vhosts.conf}"
+    local vhost_file_path="${3:-$(brew --prefix)/etc/httpd/extra/httpd-vhosts.conf}"
+    local server_admin="${4:-webmaster@localhost}"
 
     if [ -z "$project_name" ]; then
         customPrint "A Project name is required, please call this function as [ ~/setup-dev-env project_name.test ]" "error"
+        exit 1
+    fi
+
+    if grep -q "^#                                   $project_name\$" "$vhost_file_path" 2>/dev/null; then
+        customPrint "A vhost entry for [$project_name] already exists in $vhost_file_path, skipping setup." "error"
         exit 1
     fi
 
@@ -151,7 +157,7 @@ setupProject() {
         echo "#                                   $project_name"
         echo "# ================================================================================================="
         echo "<VirtualHost *:80>"
-        echo "    ServerAdmin fidel@test.com"
+        echo "    ServerAdmin $server_admin"
         echo "    ServerName $project_name"
         echo "    DocumentRoot $www_path/$project_name"
         echo "    ErrorLog $www_path/$project_name/Logs/error.log"
@@ -165,7 +171,7 @@ setupProject() {
         echo ""
         echo "<IfModule mod_ssl.c>"
         echo "    <VirtualHost *:443>"
-        echo "        ServerAdmin fidel@test.com"
+        echo "        ServerAdmin $server_admin"
         echo "        ServerName $project_name"
         echo "        DocumentRoot $www_path/$project_name"
         echo "        ErrorLog $www_path/$project_name/Logs/error.log"
@@ -184,8 +190,10 @@ setupProject() {
     } | sudo tee -a "$vhost_file_path" > /dev/null
 
     # append to hosts file
-    sudo cp /etc/hosts /etc/hosts.original
-    echo "127.0.0.1    $project_name" | sudo tee -a /etc/hosts > /dev/null
+    if ! grep -q "127.0.0.1[[:space:]]*$project_name\$" /etc/hosts; then
+        sudo cp /etc/hosts /etc/hosts.original
+        echo "127.0.0.1    $project_name" | sudo tee -a /etc/hosts > /dev/null
+    fi
 
     # restart all services
     runCMD "brew services restart --all"
@@ -194,7 +202,7 @@ setupProject() {
 deleteProject() {
     local project_name="$1"
     local www_path="${2:-/Users/fidelh/www}"
-    local vhost_file_path="${3:-/usr/local/etc/httpd/extra/httpd-vhosts.conf}"
+    local vhost_file_path="${3:-$(brew --prefix)/etc/httpd/extra/httpd-vhosts.conf}"
 
     if [ -z "$project_name" ]; then
         customPrint "A Project name is required, please call this function as [ ~/setup-dev-env delete project_name.test ]" "error"
