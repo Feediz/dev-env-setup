@@ -1,0 +1,127 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+show_help() {
+    cat <<'EOF'
+dev-env-setup - unified entry point
+
+USAGE
+  ./setup                          Interactive menu
+  ./setup <command> [args...]      Run a command directly
+  ./setup help | -h | --help       Show this help
+
+COMMANDS
+  env
+      Install core dev tools: Homebrew, Rosetta 2, httpd, mkcert, mysql,
+      nvm, VS Code, Chrome. (runs setup_env)
+
+  shell
+      Set up shell/terminal experience: oh-my-zsh, plugins, fzf, theme
+      picker, GNU coreutils, GPG. (runs setup_my_env)
+
+  vscode [environment] [gitTemplateFile] [extensionListFile]
+      Install VS Code extensions and the git commit template for a stack.
+      (runs setup-vscode)
+      environment: php (default), python, js, terraform, newrelic,
+                   docker, db, sfdc, magento, bash
+
+  project setup <name> [www_path] [vhost_file_path] [server_admin]
+      Scaffold a local project: copies the project template, creates a
+      trusted TLS cert, adds an Apache vhost, and adds a /etc/hosts entry.
+      (runs setup-dev-env setup)
+
+  project delete <name> [www_path] [vhost_file_path]
+      Remove a local project: deletes its directory, its vhost entry, and
+      its /etc/hosts entry. (runs setup-dev-env delete)
+
+EXAMPLES
+  ./setup env
+  ./setup shell
+  ./setup vscode php
+  ./setup project setup myproject.test
+  ./setup project delete myproject.test
+EOF
+}
+
+show_menu() {
+    while true; do
+        echo "What would you like to do?"
+        echo "  1) Install core dev tools (Homebrew, httpd, mkcert, mysql, nvm, VS Code, Chrome)"
+        echo "  2) Set up shell/terminal experience (oh-my-zsh, plugins, theme, fzf)"
+        echo "  3) Install VS Code extensions for a stack"
+        echo "  4) Set up a new local project (vhost + hosts + TLS cert)"
+        echo "  5) Delete a local project"
+        echo "  6) Help"
+        echo "  0) Exit"
+        printf "Enter a number: "
+        read -r choice
+
+        case "$choice" in
+            1)
+                exec "$SCRIPT_DIR/setup_env"
+                ;;
+            2)
+                exec "$SCRIPT_DIR/setup_my_env"
+                ;;
+            3)
+                printf "Environment (php, python, js, terraform, newrelic, docker, db, sfdc, magento, bash) [php]: "
+                read -r env
+                exec "$SCRIPT_DIR/setup-vscode" "${env:-php}"
+                ;;
+            4)
+                printf "Project name (e.g. myproject.test): "
+                read -r name
+                exec "$SCRIPT_DIR/setup-dev-env" setup "$name"
+                ;;
+            5)
+                printf "Project name to delete: "
+                read -r name
+                exec "$SCRIPT_DIR/setup-dev-env" delete "$name"
+                ;;
+            6)
+                show_help
+                ;;
+            0)
+                exit 0
+                ;;
+            *)
+                echo "Invalid selection."
+                ;;
+        esac
+    done
+}
+
+command="${1:-}"
+
+case "$command" in
+    "")
+        show_menu
+        ;;
+    help|-h|--help)
+        show_help
+        ;;
+    env)
+        shift
+        exec "$SCRIPT_DIR/setup_env" "$@"
+        ;;
+    shell)
+        shift
+        exec "$SCRIPT_DIR/setup_my_env" "$@"
+        ;;
+    vscode)
+        shift
+        exec "$SCRIPT_DIR/setup-vscode" "$@"
+        ;;
+    project)
+        shift
+        exec "$SCRIPT_DIR/setup-dev-env" "$@"
+        ;;
+    *)
+        echo "Unknown command: $command"
+        echo
+        show_help
+        exit 1
+        ;;
+esac
