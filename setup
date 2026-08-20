@@ -3,6 +3,30 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Dry-run support: strip --dry-run out of the args wherever it appears, and
+# re-append it when dispatching to a script that supports it (env, vscode,
+# project). `shell` (setup_my_env) does not support it.
+DRY_RUN=false
+args=()
+for arg in "$@"; do
+    if [ "$arg" = "--dry-run" ]; then
+        DRY_RUN=true
+    else
+        args+=("$arg")
+    fi
+done
+set -- "${args[@]}"
+
+dispatch() {
+    local script="$1"
+    shift
+    if [ "$DRY_RUN" = true ]; then
+        exec "$script" "$@" --dry-run
+    else
+        exec "$script" "$@"
+    fi
+}
+
 show_help() {
     cat <<'EOF'
 dev-env-setup - unified entry point
@@ -11,6 +35,11 @@ USAGE
   ./setup                          Interactive menu
   ./setup <command> [args...]      Run a command directly
   ./setup help | -h | --help       Show this help
+  --dry-run                        Preview actions without making changes
+                                    (works with env, vscode, and project;
+                                    can go anywhere in the arguments, or be
+                                    used alone to dry-run the interactive
+                                    menu; not supported by shell)
 
 COMMANDS
   env
@@ -44,10 +73,15 @@ EXAMPLES
   ./setup vscode php
   ./setup project setup myproject.test
   ./setup project delete myproject.test
+  ./setup env --dry-run
+  ./setup --dry-run project setup myproject.test
 EOF
 }
 
 show_menu() {
+    if [ "$DRY_RUN" = true ]; then
+        echo "[DRY RUN] No changes will be made."
+    fi
     while true; do
         echo "What would you like to do?"
         echo "  1) Install core dev tools (Homebrew, httpd, mkcert, mysql, nvm, VS Code, Chrome)"
@@ -62,25 +96,28 @@ show_menu() {
 
         case "$choice" in
             1)
-                exec "$SCRIPT_DIR/setup_env"
+                dispatch "$SCRIPT_DIR/setup_env"
                 ;;
             2)
+                if [ "$DRY_RUN" = true ]; then
+                    echo "Note: 'shell' (setup_my_env) does not support --dry-run; running normally."
+                fi
                 exec "$SCRIPT_DIR/setup_my_env"
                 ;;
             3)
                 printf "Environment (php, python, js, terraform, newrelic, docker, db, sfdc, magento, bash, dotnet, cfml, mulesoft) [php]: "
                 read -r env
-                exec "$SCRIPT_DIR/setup-vscode" "${env:-php}"
+                dispatch "$SCRIPT_DIR/setup-vscode" "${env:-php}"
                 ;;
             4)
                 printf "Project name (e.g. myproject.test): "
                 read -r name
-                exec "$SCRIPT_DIR/setup-dev-env" setup "$name"
+                dispatch "$SCRIPT_DIR/setup-dev-env" setup "$name"
                 ;;
             5)
                 printf "Project name to delete: "
                 read -r name
-                exec "$SCRIPT_DIR/setup-dev-env" delete "$name"
+                dispatch "$SCRIPT_DIR/setup-dev-env" delete "$name"
                 ;;
             6)
                 show_help
@@ -106,19 +143,22 @@ case "$command" in
         ;;
     env)
         shift
-        exec "$SCRIPT_DIR/setup_env" "$@"
+        dispatch "$SCRIPT_DIR/setup_env" "$@"
         ;;
     shell)
         shift
+        if [ "$DRY_RUN" = true ]; then
+            echo "Note: 'shell' (setup_my_env) does not support --dry-run; running normally."
+        fi
         exec "$SCRIPT_DIR/setup_my_env" "$@"
         ;;
     vscode)
         shift
-        exec "$SCRIPT_DIR/setup-vscode" "$@"
+        dispatch "$SCRIPT_DIR/setup-vscode" "$@"
         ;;
     project)
         shift
-        exec "$SCRIPT_DIR/setup-dev-env" "$@"
+        dispatch "$SCRIPT_DIR/setup-dev-env" "$@"
         ;;
     *)
         echo "Unknown command: $command"

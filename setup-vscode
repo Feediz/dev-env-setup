@@ -3,6 +3,20 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
 
+# Dry-run support: strip --dry-run out of the args wherever it appears,
+# leaving the remaining positional args (environment, gitTemplateFile,
+# extensionListFile) in place.
+DRY_RUN=false
+args=()
+for arg in "$@"; do
+    if [ "$arg" = "--dry-run" ]; then
+        DRY_RUN=true
+    else
+        args+=("$arg")
+    fi
+done
+set -- "${args[@]}"
+
 # Environment variables
 environment=${1:-php}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
@@ -43,7 +57,7 @@ show_available_environments() {
     echo "  mulesoft   - MuleSoft / Anypoint Code Builder (requires a full repo checkout)"
     echo "  bash       - Bash alias setup"
     echo
-    echo "Usage: $0 [environment] [gitTemplateFile] [extensionListFile]"
+    echo "Usage: $0 [environment] [gitTemplateFile] [extensionListFile] [--dry-run]"
 }
 
 # Function to install VSCode extensions from a URL or a local extension-list file
@@ -51,6 +65,10 @@ install_extensions() {
     local source="$1"
 
     if [[ "$source" == http://* || "$source" == https://* ]]; then
+        if [ "$DRY_RUN" = true ]; then
+            echo "[DRY RUN] Would download extension list from $source and install each listed extension"
+            return
+        fi
         curl -o "$extension" "$source"
         xargs -L 1 code --install-extension < "$extension"
         rm "$extension"
@@ -62,11 +80,22 @@ install_extensions() {
         echo "This environment's extension list is stored locally in the repo, so it requires running from a full checkout (e.g. ./setup vscode <environment>), not the standalone curl one-liner."
         exit 1
     fi
-    xargs -L 1 code --install-extension < "$source"
+
+    if [ "$DRY_RUN" = true ]; then
+        while IFS= read -r extId; do
+            [ -n "$extId" ] && echo "[DRY RUN] Would run: code --install-extension $extId"
+        done < "$source"
+    else
+        xargs -L 1 code --install-extension < "$source"
+    fi
 }
 
 # Function to set up bash aliases
 setup_bash_alias() {
+    if [ "$DRY_RUN" = true ]; then
+        echo "[DRY RUN] Would download $bashAlias to ~/.bash_aliases and source it from ~/.zshrc"
+        return
+    fi
     echo "Setting up default bash aliases"
     curl -o ~/.bash_aliases $bashAlias
     echo -e "\nif [ -f ~/.bash_aliases ]; then\n\t. ~/.bash_aliases\nfi" >> ~/.zshrc
@@ -77,8 +106,12 @@ setup_bash_alias() {
 # Function to set up common configuration
 setup_common() {
     echo "Setting up environment for common development configuration"
-    curl -o ~/.gitmessage "$gitTemplateFile"
-    git config --global commit.template ~/.gitmessage
+    if [ "$DRY_RUN" = true ]; then
+        echo "[DRY RUN] Would download git template from $gitTemplateFile to ~/.gitmessage and set it as git's global commit.template"
+    else
+        curl -o ~/.gitmessage "$gitTemplateFile"
+        git config --global commit.template ~/.gitmessage
+    fi
     install_extensions "$extension_common"
     install_extensions "$extension_themes"
     setup_bash_alias
@@ -120,6 +153,10 @@ setup_environment() {
 if [[ "$environment" == "help" || "$environment" == "--help" || "$environment" == "-h" ]]; then
     show_available_environments
     exit 0
+fi
+
+if [ "$DRY_RUN" = true ]; then
+    echo "[DRY RUN] No changes will be made."
 fi
 
 setup_common
