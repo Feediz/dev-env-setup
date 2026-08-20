@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+
 # Environment variables
 environment=${1:-php}
 gitTemplateFile=${2:-https://gist.githubusercontent.com/Feediz/8b4e66e2b438db90d471ad7a5d390597/raw/2bb89cb231cb17115eef7b4f753c8901ff236455/.gitmessage}
@@ -36,17 +38,31 @@ show_available_environments() {
     echo "  magento    - Magento development"
     echo "  woo        - WooCommerce development"
     echo "  ansible    - Ansible development"
+    echo "  dotnet     - .NET / C# development (requires a full repo checkout)"
+    echo "  cfml       - CFML development (requires a full repo checkout)"
+    echo "  mulesoft   - MuleSoft / Anypoint Code Builder (requires a full repo checkout)"
     echo "  bash       - Bash alias setup"
     echo
     echo "Usage: $0 [environment] [gitTemplateFile] [extensionListFile]"
 }
 
-# Function to install VSCode extensions from a URL
+# Function to install VSCode extensions from a URL or a local extension-list file
 install_extensions() {
-    local url="$1"
-    curl -o "$extension" "$url"
-    xargs -L 1 code --install-extension < "$extension"
-    rm "$extension"
+    local source="$1"
+
+    if [[ "$source" == http://* || "$source" == https://* ]]; then
+        curl -o "$extension" "$source"
+        xargs -L 1 code --install-extension < "$extension"
+        rm "$extension"
+        return
+    fi
+
+    if [ ! -f "$source" ]; then
+        echo "Extension list not found: $source"
+        echo "This environment's extension list is stored locally in the repo, so it requires running from a full checkout (e.g. ./setup vscode <environment>), not the standalone curl one-liner."
+        exit 1
+    fi
+    xargs -L 1 code --install-extension < "$source"
 }
 
 # Function to set up bash aliases
@@ -83,6 +99,9 @@ setup_environment() {
         db) install_extensions "$extension_db" ;;
         sfdc) install_extensions "$extension_sfdc" ;;
         magento) install_extensions "$extension_magento" ;;
+        dotnet) install_extensions "$SCRIPT_DIR/extensions/dotnet.txt" ;;
+        cfml) install_extensions "$SCRIPT_DIR/extensions/cfml.txt" ;;
+        mulesoft) install_extensions "$SCRIPT_DIR/extensions/mulesoft.txt" ;;
         woo|ansible)
             echo "No extension list is configured yet for '$env'."
             show_available_environments

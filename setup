@@ -15,7 +15,7 @@ USAGE
 COMMANDS
   env
       Install core dev tools: Homebrew, Rosetta 2, httpd, mkcert, mysql,
-      nvm, VS Code, Chrome. (runs setup_env)
+      nvm, VS Code, Chrome, .NET SDK, a JDK, CommandBox. (runs setup_env)
 
   shell
       Set up shell/terminal experience: oh-my-zsh, plugins, fzf, theme
@@ -25,7 +25,9 @@ COMMANDS
       Install VS Code extensions and the git commit template for a stack.
       (runs setup-vscode)
       environment: php (default), python, js, terraform, newrelic,
-                   docker, db, sfdc, magento, bash
+                   docker, db, sfdc, magento, bash, dotnet, cfml, mulesoft
+      (dotnet/cfml/mulesoft use extension lists stored in this repo, so
+      they require running from a full checkout, not the curl one-liner)
 
   project setup <name> [www_path] [vhost_file_path] [server_admin]
       Scaffold a local project: copies the project template, creates a
@@ -66,7 +68,7 @@ show_menu() {
                 exec "$SCRIPT_DIR/setup_my_env"
                 ;;
             3)
-                printf "Environment (php, python, js, terraform, newrelic, docker, db, sfdc, magento, bash) [php]: "
+                printf "Environment (php, python, js, terraform, newrelic, docker, db, sfdc, magento, bash, dotnet, cfml, mulesoft) [php]: "
                 read -r env
                 exec "$SCRIPT_DIR/setup-vscode" "${env:-php}"
                 ;;

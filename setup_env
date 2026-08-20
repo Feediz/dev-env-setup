@@ -245,6 +245,58 @@ function checkGoogleChromeInstall() {
     fi
 }
 
+function checkDotnetInstall() {
+    # check if the .NET SDK is installed
+    customPrint "Checking if .NET SDK is installed ..." "info"
+    which -s dotnet
+    if [[ $? != 0 ]] ; then
+        # Install .NET SDK
+        customPrint "Installing .NET SDK ..." "info"
+        cmdInstallDotnet="brew install --cask dotnet-sdk"
+        customPrint "Running command: ${On_IRed}( $cmdInstallDotnet )${Green}" "info"
+        $cmdInstallDotnet
+    else
+        customPrint ".NET SDK is ${On_IRed}installed${Green} ..." "info"
+    fi
+}
+
+function checkJDKInstall() {
+    # check if a JDK is installed (needed for MuleSoft / Anypoint Code Builder)
+    customPrint "Checking if a JDK is installed ..." "info"
+    which -s java
+    if [[ $? != 0 ]] ; then
+        # Install OpenJDK
+        customPrint "Installing OpenJDK ..." "info"
+        cmdInstallJDK="brew install openjdk"
+        customPrint "Running command: ${On_IRed}( $cmdInstallJDK )${Green}" "info"
+        $cmdInstallJDK
+
+        # Register the JDK with the system so /usr/libexec/java_home can find it
+        jdkSymlink="/Library/Java/JavaVirtualMachines/openjdk.jdk"
+        if [ ! -e "$jdkSymlink" ]; then
+            customPrint "Linking OpenJDK into /Library/Java/JavaVirtualMachines ..." "info"
+            sudo ln -sfn "$(brew --prefix)/opt/openjdk/libexec/openjdk.jdk" "$jdkSymlink"
+        fi
+    else
+        customPrint "A JDK is ${On_IRed}installed${Green} ..." "info"
+    fi
+}
+
+function checkCommandBoxInstall() {
+    # check if CommandBox (the `box` CLI, used for local CFML development) is installed
+    customPrint "Checking if CommandBox is installed ..." "info"
+    which -s box
+    if [[ $? != 0 ]] ; then
+        # Install CommandBox
+        customPrint "Installing CommandBox ..." "info"
+        cmdInstallCommandBox="brew install commandbox"
+        customPrint "Running command: ${On_IRed}( $cmdInstallCommandBox )${Green}" "info"
+        $cmdInstallCommandBox
+    else
+        customPrint "CommandBox is ${On_IRed}installed${Green} ..." "info"
+    fi
+}
+
 # Check if Rosetta 2 is needed and install if necessary
 checkRosettaInstall
 
@@ -268,3 +320,12 @@ checkVSCodeInstall
 
 # install Google Chrome
 checkGoogleChromeInstall
+
+# install .NET SDK
+checkDotnetInstall
+
+# install a JDK (needed for MuleSoft / Anypoint Code Builder)
+checkJDKInstall
+
+# install CommandBox (CFML local dev server + package manager)
+checkCommandBoxInstall

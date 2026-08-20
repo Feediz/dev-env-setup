@@ -15,7 +15,7 @@ pick what you need:
 Or call a command directly:
 
 ```bash
-./setup env                              # core dev tools (Homebrew, httpd, mkcert, mysql, nvm, VS Code, Chrome)
+./setup env                              # core dev tools (Homebrew, httpd, mkcert, mysql, nvm, VS Code, Chrome, .NET SDK, JDK, CommandBox)
 ./setup shell                            # shell/terminal experience (oh-my-zsh, plugins, theme, fzf)
 ./setup vscode php                       # VS Code extensions + git template for a stack
 ./setup project setup myproject.test     # scaffold a local project (vhost + hosts + TLS cert)
@@ -23,6 +23,11 @@ Or call a command directly:
 ```
 
 Run `./setup help` for the full command reference.
+
+`./setup vscode` supports: php, python, js, terraform, newrelic, docker, db,
+sfdc, magento, bash (via remote gists), and dotnet, cfml, mulesoft (via
+extension lists stored locally in `extensions/` — these three require a full
+repo checkout, see below).
 
 ### VS Code extensions only (curl, no checkout needed)
 
@@ -35,3 +40,8 @@ curl -s https://raw.githubusercontent.com/Feediz/dev-env-setup/master/setup-vsco
 - ENV = (php, python, js, terraform, newrelic, docker, db, sfdc, magento, bash)
 - GIT-TEMPLATE-FILE = the url to the git message template
 - EXTENSIONS-FILE = the url that lists all the vs code extensions to be installed
+
+Note: dotnet, cfml, and mulesoft are not available through this curl
+one-liner — their extension lists live in this repo's `extensions/`
+directory, so they require `./setup vscode <environment>` from a full
+checkout instead.
